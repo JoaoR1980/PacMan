@@ -1,0 +1,431 @@
+Character.h
+---------------
+#pragma once
+#ifndef CHARACTER_H
+#define CHARACTER_H
+
+#include "Map.h"
+
+class Character {
+protected:
+	int x, y;//posição no mapa
+	char icon; //icon do personagem
+public:
+	Character(int startX, int startY, char representation);
+	virtual void move(int dx, int dy, const Map& map); //movimento básico
+	int getX() const;
+	int getY() const;
+	char getIcon() const;
+};
+
+#endif
+-------------------
+Character.cpp
+------------------
+#include "Character.h"
+
+Character::Character(int startX, int startY, char representation) : x(startX), y(startY), icon(representation){}
+void Character::move(int dx, int dy, const Map& map){
+	int newX = x + dx;
+	int newY = y + dy;
+
+	if (map.getTile(newX, newY) != '#') {
+		x = newX;
+		y = newY;
+	}
+}
+int Character::getX() const { return x; }
+int Character::getY() const { return y; }
+char Character::getIcon() const { return icon; }
+
+.................................................
+
+Pac-Man.h
+------------------------------------------------
+#pragma once
+#ifndef PACMAN_H
+#define PACMAN_H
+
+#include "Character.h"
+
+class PacMan : public Character {
+private:
+	int lives;//numero de vidas
+	int x, y;
+	int score;
+	
+public:
+	PacMan(int startX, int startY);
+
+	using Character::Character; //reutiliza o construtor da base
+
+	void move(int dx, int dy, const Map& map);
+	void eat(const Map & map);//ação de comer pontos
+	int getScore() const;
+	void loseLife();//perder vidas
+	int getLives() const;
+};
+
+#endif
+-----------------------------
+Pac-Man.cpp
+-----------------
+#include <curses.h>
+#include "Map.h"
+#include "PacMan.h"
+
+PacMan::PacMan(int startX, int startY) : Character(startX, startY, 'P'), lives(3){}
+void PacMan::eat(const Map& map) {
+
+	if (map.getTile(x, y) == '.') {
+		score += 10;
+
+		//remove o ponto do mapa
+
+		map.getTile(x, y) == ' ';
+	}
+
+}
+
+void PacMan::loseLife() {
+	if (lives > 0) lives--;
+}
+int PacMan::getLives() const {
+	return lives;
+}
+
+int PacMan::getScore() const {
+	return score;
+}
+.....................................................
+Game.h
+--------------------
+#pragma once
+#ifndef GAME_H
+#define GAME_H
+
+#include "Map.h"
+#include "Character.h"
+#include "PacMan.h"
+#include "Ghost.h"
+#include "Interface.h"
+#include <vector>
+#include "InputManager.h"
+
+using namespace std;
+
+class Game {
+	
+	Map gameMap;
+	PacMan player;
+	vector<Ghost> ghosts;
+	Interface interface;
+	int score;
+	bool running;
+	InputManager inputManager;
+
+public:
+
+	Game();
+	void init();
+	void gameLoop();
+	void handleInput(int input);
+	void update();
+	void checkColision();
+	void render();
+};
+
+#endif
+--------------------------
+Game.cpp
+--------------------------------
+#include "Game.h"
+#include <curses.h>
+
+Game::Game() : player(1, 1), score(0), running(true){}
+
+void Game::init() {
+	gameMap.loadMap("map.txt");
+}
+
+void Game::gameLoop() {
+	while (running) {
+		int input = inputManager.getInput();
+		
+		if (inputManager.isValidKey(input)) {
+			handleInput(input);
+		}
+		
+		update();
+		render();
+	}
+}
+void Game::handleInput(int input) {
+	switch (input) {
+	case 'W' : player.move(0, -1); break;
+	case 's': player.move(0, 1); break;
+	case 'a': player.move(-1, 0); break;
+	case 'd': player.move(1, 0); break;
+	}
+}
+void Game::update() {
+	checkColision();
+}
+void Game::checkColision() {
+	//obter posição atual do pacMan
+	int pacX = player.getX();
+	int pacY = player.getY();
+
+	//verificar colisão com paredes(elementos do mapa)
+	if (gameMap.getTile(pacX, pacY) == '#') {// '#' represneta uma parede
+		//impede o movimento do PacMan, revertendo a última movimetação
+		if (pacX > 0) player.move(-1, 0); // se veio da direita
+		if(pacX < gameMap.getTile(0,0));
+		return;
+	}
+
+}
+
+void Game::render() {
+	interface.drawMap(gameMap);
+	interface.drawCharacter(player);
+	interface.displayScore(score);
+}
+.......................................................
+Ghost.h
+------------
+#pragma once
+#ifndef GHOST_H
+#define GHOST_H
+
+#include "Character.h"
+#include <cmath>
+#include "Map.h"
+
+class Ghost : public Character {
+private:
+	int lives;//numero de vidas
+
+public:
+	Ghost(int startX, int startY);
+	void chase(int targetX, int targetY, const Map& map);//lógica básica de perseguição
+	int getLives() const;
+};
+
+#endif
+-----------------------
+Ghost.cpp
+--------------------
+#include "Ghost.h"
+
+Ghost::Ghost(int startX, int startY) : Character(startX, startY, 'G'){}
+void Ghost::chase(int targetX, int targetY, const Map& map) {
+	static int prevX = x, prevY = y;
+	int deltaX = targetX - x;
+	int deltaY = targetY - y;
+
+	if (abs(deltaX) > abs(deltaY)) {
+		if (deltaX > 0 && map.getTile(x + 1, y) != '#' && (x + 1 != prevX || y != prevY)) {
+			prevX = x;
+			prevY = y;
+			x++;
+		}else if (deltaX < 0 && map.getTile(x - 1, y) != '#' && (x - 1 != prevX || y != prevY)) {
+			prevX = x;
+			prevY = y;
+			x--;
+		}
+		else if (deltaY > 0 && map.getTile(x, y + 1) != '#' && (x != prevX || y + 1 != prevY)) {
+			prevX = x;
+			prevY = y;
+			y++;
+		}
+		else if (deltaY < 0 && map.getTile(x, y - 1) != '#' && (x != prevX || y - 1 != prevY)) {
+			prevX = x;
+			prevY = y;
+			y--;
+		}
+	}
+	else {
+		if (deltaY > 0 && map.getTile(x, y + 1) != '#' && (x != prevX || y + 1 != prevY)) {
+			prevX = x;
+			prevY = y;
+			y++;
+		}
+		else if (deltaY < 0 && map.getTile(x, y - 1) != '#' && (x != prevX || y - 1 != prevY)) {
+			prevX = x;
+			prevY = y;
+			y--;
+		}else if (deltaX > 0 && map.getTile(x + 1, y) != '#' && (x + 1 != prevX || y != prevY)) {
+			prevX = x;
+			prevY = y;
+			x++;
+		}
+		else if (deltaX < 0 && map.getTile(x - 1, y) != '#' && (x - 1 != prevX || y != prevY)) {
+			prevX = x;
+			prevY = y;
+			x--;
+		}
+	}
+}
+....................................
+
+------------------
+#pragma once
+#ifndef INPUTMANAGER_H
+#define INPUTMANAGER_H
+
+using namespace std;
+
+class InputManager {
+
+public:
+
+	InputManager();
+	int getInput();//captura a entrada do teclado e retorna um caractere
+	bool isValidKey(int key);
+	~InputManager();
+};
+
+#endif#pragma once
+-------------------------------
+InputManager.cpp
+--------------------------
+#include "InputManager.h"
+#include <curses.h>
+
+int InputManager::getInput() {
+	return getchar();
+}
+
+bool InputManager::isValidKey(int key) {
+	switch (key) {
+		case 'w': //cima
+		case 'a': //esquerda
+		case 's': //baixo
+		case 'd': //direita
+		case 'q': //sair
+			return true;
+		default:
+			return false;
+	}
+	
+}
+....................................
+Interface.h
+---------------------
+#pragma once
+#ifndef INTERFACE_H
+#define INTERFACE_H
+
+#include "Map.h"
+#include "Character.h"
+
+using namespace std;
+
+class Interface {
+
+public:
+	
+	void drawMap(const Map& map);
+	void drawCharacter(const Character& character);
+	void displayScore(int score);
+};
+
+#endif
+------------------------
+Interface.cpp
+------------------------
+#include "Interface.h"
+#include<iostream>
+
+void Interface::drawMap(const Map& map) {
+	map.draw();
+}
+
+void Interface::drawCharacter(const Character& character) {
+	cout << character.getIcon();
+}
+void Interface::displayScore(int score) {
+	cout << "Score: " << score << endl;
+}
+....................................
+Map.h
+------------------
+#pragma once
+#ifndef MAP_H
+#define MAP_H
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+
+using namespace std;
+
+class Map{
+private:
+	vector <string> layout;
+
+public:
+	Map();
+	void loadMap(const string& filename);//carrega layout de arquivo
+	void draw() const; // desenha o mapa na tela
+	char getTile(int x, int y) const;
+	void setTile(int x, int y, char value);
+	void printMap() const;
+};
+
+#endif
+--------------------------
+Map.cpp
+-------------------------
+#include "Map.h"
+#include <fstream>
+#include <iostream>
+using namespace std;
+
+Map::Map() {
+	//carregar mapa padrão ou inicializar
+}
+
+void Map::loadMap(const string& filename) {
+	ifstream file(filename);
+	string line;
+	if (!file) {
+		throw runtime_error("Failed to open map file");
+	}
+	//string line;
+	layout.clear();
+	while (getline(file, line)) {
+		layout.push_back(line);
+	}
+}
+
+void Map::draw() const {
+	for (const auto& row : layout) {
+		cout << row << endl;
+	}
+}
+char Map::getTile(int x, int y) const {
+	if (y >= 0 && y < layout.size() && x >= 0 && x < layout.size()) {
+		return layout[x][y];
+	}
+	return '#'; //retorna parede para posições inválidas
+}
+void Map::setTile(int x, int y, char value) {
+	if (y >= 0 && y < layout.size() && x >= 0 && x < layout.size()) {
+		layout[x][y] = value;
+	}
+}
+
+void Map::printMap() const {
+	for (const string& row : layout) {
+		cout << row << endl;
+	}
+}
+............................................
+
+
+
+
