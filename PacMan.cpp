@@ -1,68 +1,99 @@
 #include "PacMan.h"
-#include <curses.h> // Biblioteca PDCurses
+#define POWER_MODE_DURATION 10 // Modo Power dura 10 segundos
 
 
-// ------------------------------------------------------------------------------------------------
 
-PacMan::PacMan(int posX, int posY, char simbolo)
-    : x(posX), y(posY), simbolo(simbolo), pontuacao(0) {}
+PacMan::PacMan(int startX, int startY, char symbol, int color)
+    : Character(startX, startY, symbol, color), isInvulnerable(false), invulnerabilityTimer(0), powerMode(false), powerModeStartTime(0), originalColor(color), powerColor(3) {}
 
-// ------------------    Move o Pac-Man   ---------------------------------------------------------
+PacMan::PacMan() : Character(0, 0, '@', 3) { // Um construtor padrão que inicializa o PacMan em (0, 0)
+    // Inicialização adicional, se necessário
+}
 
-void PacMan::mover(char direcao, const Mapa& mapa) {
-    int novoX = x;
-    int novoY = y;
+void PacMan::setInvulnerable(bool state, int duration) {
+    isInvulnerable = state;
+    invulnerabilityTimer = duration;
+}
 
-    // Calcula a nova posição com base na direção
-    switch (direcao) {
-    case 'w': // Cima
-        novoY--;
-        break;
-    case 's': // Baixo
-        novoY++;
-        break;
-    case 'a': // Esquerda
-        novoX--;
-        break;
-    case 'd': // Direita
-        novoX++;
-        break;
-    default:
-        return; // Direção inválida
-    }
+bool PacMan::getInvulnerable() const {
+    return isInvulnerable;
+}
 
-    // Verifica se a nova posição é válida
-    if (!mapa.verificarColisao(novoX, novoY)) {
-        x = novoX;
-        y = novoY;
-
-        // Verifica se há um ponto ('.') na nova posição
-        if (mapa.obterElemento(x, y) == '.') {
-            pontuacao++;
+void PacMan::updateState() {
+    if (isInvulnerable && invulnerabilityTimer > 0) {
+        --invulnerabilityTimer;
+        if (invulnerabilityTimer == 0) {
+            isInvulnerable = false; // Perde a invulnerabilidade quando o tempo acaba
         }
     }
 }
+void PacMan::move(int dx, int dy, const Map& map) {
+    int newX = x + dx;
+    int newY = y + dy;
 
-// Desenha o Pac-Man na tela
-/*void PacMan::desenhar() const {
-    mvaddch(y, x, simbolo); // Desenha o Pac-Man na posição atual
-}*/
-
-/*void PacMan::desenhar() const {
-    attron(COLOR_PAIR(1)); // Ativar cor do Pac-Man
-    mvaddch(y, x, 'P');    // Desenhar Pac-Man
-    attroff(COLOR_PAIR(1)); // Desativar cor
-}*/
-
-// ------------------------------------------------------------------------------------------------
-
-void PacMan::desenhar(bool powerUp) const {
-    if (powerUp) {
-        attron(COLOR_PAIR(5)); // Ativar cor de power-up
+    // Verifica se o novo local é caminhável
+    if (map.isWalkable(newX, newY)) {
+        x = newX;
+        y = newY;
+    }
+}
+void PacMan::activatePowerMode() { 
+    powerMode = true; 
+    powerModeStartTime = time(0); // Armazena o tempo de ativação do modo Power
+}
+void PacMan::deactivetedPowerMode() { 
+    if (powerMode && (time(0) - powerModeStartTime >= POWER_MODE_DURATION)) {
+        powerMode = false;
+    }
+}
+void PacMan::draw(){
+    if (powerMode) {
+        attron(COLOR_PAIR(powerColor)); // Muda a cor para a cor do Power Mode
     }
     else {
-        attron(COLOR_PAIR(1)); // Cor padrão do Pac-Man
+        attron(COLOR_PAIR(originalColor)); // Mantenha a cor original
     }
-    mvaddch(y, x, 'P'); // Desenhar Pac-Man
-    attroff(COLOR_PAIR(powerUp ? 5 : 1)); // Desativar cor
+    mvaddch(y, x, sprite); // Desenha o Pac-Man
+    attroff(COLOR_PAIR(originalColor)); // Restaura a cor original
+    attroff(COLOR_PAIR(powerColor)); // Restaura a cor do Power Mode
 }
+
+void PacMan::updateState(const Map& map) {
+    // Tenta trocar para a direção armazenada (se existir)
+    if (queuedDirectionX != 0 || queuedDirectionY != 0) {
+        int queuedX = x + queuedDirectionX;
+        int queuedY = y + queuedDirectionY;
+
+        if (map.isWalkable(queuedX, queuedY)) {
+            // Atualiza para a nova direção
+            currentDirectionX = queuedDirectionX;
+            currentDirectionY = queuedDirectionY;
+
+            // Reseta a direção armazenada
+            queuedDirectionX = 0;
+            queuedDirectionY = 0;
+        }
+    }
+
+    // Move na direção atual
+    int newX = x + currentDirectionX;
+    int newY = y + currentDirectionY;
+
+    if (map.isWalkable(newX, newY)) {
+        x = newX;
+        y = newY;
+    }
+    else {
+        // Para se encontrar um obstáculo
+        currentDirectionX = 0;
+        currentDirectionY = 0;
+    }
+}
+
+
+void PacMan::queueDirection(int dx, int dy) {
+    // Adiciona a direção à fila, se não for a mesma da última direção
+    queuedDirectionX = dx;
+    queuedDirectionY = dy;
+}
+
