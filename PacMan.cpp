@@ -4,9 +4,9 @@
 
 
 PacMan::PacMan(int startX, int startY, char symbol, int color)
-    : Character(startX, startY, symbol, color), isInvulnerable(false), invulnerabilityTimer(0), powerMode(false), powerModeStartTime(0), originalColor(color), powerColor(3) {}
+    : Character(startX, startY, symbol, color), isInvulnerable(false), invulnerabilityTimer(0), powerMode(false), powerModeStartTime(0), originalColor(color), powerColor(1) {}
 
-PacMan::PacMan() : Character(0, 0, '@', 3) { // Um construtor padrão que inicializa o PacMan em (0, 0)
+PacMan::PacMan() : Character(0, 0, '@', 1) { // Um construtor padrão que inicializa o PacMan em (0, 0)
     // Inicialização adicional, se necessário
 }
 
@@ -31,11 +31,15 @@ void PacMan::move(int dx, int dy, const Map& map) {
     int newX = x + dx;
     int newY = y + dy;
 
+  
+
     // Verifica se o novo local é caminhável
     if (map.isWalkable(newX, newY)) {
         x = newX;
         y = newY;
+
     }
+    
 }
 void PacMan::activatePowerMode() { 
     powerMode = true; 
@@ -97,3 +101,7 @@ void PacMan::queueDirection(int dx, int dy) {
     queuedDirectionY = dy;
 }
 
+void PacMan::setPosition(int startX, int startY) {
+    x = startX;
+    x = startY;
+}

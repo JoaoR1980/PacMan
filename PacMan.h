@@ -12,7 +12,7 @@ private:
     int invulnerabilityTimer; // Tempo restante de invulnerabilidade
     time_t powerModeStartTime; // Armazena o tempo de ativação do modo Power
     int originalColor = attroff(COLOR_PAIR(1)); // cor original
-    int powerColor = attron(COLOR_PAIR(3)); // cor do pac-Man qunado em power mode
+    int powerColor = attron(COLOR_PAIR(1)); // cor do pac-Man qunado em power mode
 
     //-------------------------------------------
 
@@ -37,7 +37,10 @@ public:
     void deactivetedPowerMode();
     void draw();
     void updateState(const Map& map);
-    void queueDirection(int dx, int dy);
+    void movePacAutomatically(const Map& map);
+    void queueDirection(int dx, int dy);// Define uma nova direção desejada
+
+    void setPosition(int initialX, int initialY);
     
 };
 

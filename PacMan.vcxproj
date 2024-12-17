@@ -143,12 +143,10 @@
     <ClCompile Include="Ghost.cpp" />
     <ClCompile Include="GameInterface.cpp" />
     <ClCompile Include="GameLogic.cpp" />
-    <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="PacMan.cpp" />
     <ClCompile Include="PDcursesInterface.cpp" />
-    <ClCompile Include="Pellets.cpp" />
     <ClCompile Include="PowerPellet.cpp" />
     <ClCompile Include="UIManager.cpp" />
   </ItemGroup>
@@ -157,11 +155,9 @@
     <ClInclude Include="Ghost.h" />
     <ClInclude Include="GameInterface.h" />
     <ClInclude Include="GameLogic.h" />
-    <ClInclude Include="LinkedList.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="PacMan.h" />
     <ClInclude Include="PDcursesInterface.h" />
-    <ClInclude Include="Pellets.h" />
     <ClInclude Include="PowerPellet.h" />
     <ClInclude Include="UIManager.h" />
   </ItemGroup>

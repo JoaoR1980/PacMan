@@ -16,9 +16,6 @@ void UIManager::endUI() {
 
 void UIManager::initColors() {
     if (has_colors()) {
-        //init_pair(1, COLOR_BLUE, COLOR_BLACK);  // Fundo
-        //init_pair(2, COLOR_RED, COLOR_BLACK);   // Fantasmas
-        //init_pair(3, COLOR_YELLOW, COLOR_BLACK);// Pac-Man
         initscr();
         start_color();
         init_pair(1, COLOR_BLUE, COLOR_BLACK); // Paredes

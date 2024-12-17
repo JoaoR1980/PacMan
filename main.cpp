@@ -43,6 +43,7 @@ int main() {
     while (true) {
         game.updateGame();
         //game.handleInput();
+        timeout(256);
         int ch = getch();
         switch (ch) {
         case 'q': // Sair do jogo

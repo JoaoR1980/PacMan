@@ -15,10 +15,10 @@ private:
     Map map;
     PacMan pacman; // Instância de PacMan
     std::vector<Ghost> ghosts; // Vetor de instâncias de Ghost
-    std::vector<PowerPellet> powerPellets;  // Usando um vetor para armazenar múltiplos Power Pellets
+    std::vector<PowerPellet> powerPellets;  // Vetor de instâncias de Power Pellets
     int score;
     int lives;
-    bool victory; // Nova variável para rastrear se o Pac-Man venceu
+    bool victory; // variável para verificar se o Pac-Man venceu
 
 public:
     GameLogic();
@@ -27,10 +27,10 @@ public:
     void updateGame();
     void movePacman(int dx, int dy);
     void endGame(bool vitoty);
-    void checkCollisionWithGhost();
+    void checkCollision();
     bool isVictory() const; // Getter para verificar vitória
-    void checkVictory();                       // Método de verificação de vitória
-    void handleInput();
+    void checkVictory();    // Método de verificação de vitória
+    //void handleInput();
 };
 
 #endif // GAMELOGIC_H

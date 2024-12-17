@@ -33,7 +33,8 @@ void Ghost::moveAutomatically(const PacMan& pacman, const Map& map, const std::v
 
     int melhorX = getX();
     int melhorY = getY();
-    int menorDistancia = std::abs(pacman.getX() - getX()) + std::abs(pacman.getY() - getY());  // Distância inicial
+
+    int initialDistance = pacman.powerMode ? 0 : INT_MAX;
 
     // Testar todas as 4 direções possíveis (cima, baixo, esquerda, direita)
     for (int i = 0; i < 4; ++i) {
@@ -59,13 +60,25 @@ void Ghost::moveAutomatically(const PacMan& pacman, const Map& map, const std::v
             // Calcular a distância até o PacMan
             int distancia = std::abs(pacman.getX() - novoX) + std::abs(pacman.getY() - novoY);
 
-            // Escolhe a direção mais próxima ao PacMan
-            if (distancia < menorDistancia) {
-                menorDistancia = distancia;
-                melhorX = novoX;
-                melhorY = novoY;
+           if (pacman.powerMode) {
+                // Fugir: procurar a posição mais distante do PacMan
+                if (distancia > initialDistance) {
+                    initialDistance = distancia;
+                    melhorX = novoX;
+                    melhorY = novoY;
+                }
             }
+            else {
+                // Aproximar-se: procurar a posição mais próxima do PacMan
+                if (distancia < initialDistance) {
+                    initialDistance = distancia;
+                    melhorX = novoX;
+                    melhorY = novoY;
+                }
+            }
+
         }
+        
     }
 
     // Atualiza a posição do fantasma
